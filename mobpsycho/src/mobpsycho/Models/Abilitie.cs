@@ -8,10 +8,27 @@ namespace mobpsycho.Models
         [Key]
         [DatabaseGenerated(DatabaseGeneratedOption.Identity)] // Id Autoincrement
         public int IdAbilitie { get; set; }
-        public string Name { get; set; } = null!; // Telekinesis
-        public string Description { get; set; } = null!;  // Shigeo possesses immeasurably potent telekinesis. With it, he can move extremely heavy objects, such as entire buildings, pin an entire crowd to a ceiling, create nearly impenetrable force-fields, fly, augment his physical strength and speed, disassemble matter and reconstruct it on a molecular level.
+        public string Name { get; set; }
+        public string Description { get; set; }
         public int IdCharacter { get; set; }
         [ForeignKey("IdCharacter")]
-        public Character? Character { get; set; } // Relationship = One -
+        public Character? Character { get; set; }
     }
+
+    public class AbilitieRequest
+    {
+        public int IdAbilitie { get; set; }
+        public string Name { get; set; }
+        public string Description { get; set; }
+        public int IdCharacter { get; set; }
+    }
+
+    //public class AbilitieFullView
+    //{
+    //    public int IdAbilitie { get; set; }
+    //    public string Name { get; set; }
+    //    public string Description { get; set; }
+    //    public int IdCharacter { get; set; }
+    //    public List<CharacterViewModel> Character { get; set; }
+    //}
 }

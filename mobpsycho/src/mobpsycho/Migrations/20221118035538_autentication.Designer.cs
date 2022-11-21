@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using mobpsycho.Models;
 
@@ -11,9 +12,10 @@ using mobpsycho.Models;
 namespace mobpsycho.Migrations
 {
     [DbContext(typeof(MobpsychoDbContext))]
-    partial class MobpsychoDbContextModelSnapshot : ModelSnapshot
+    [Migration("20221118035538_autentication")]
+    partial class autentication
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder

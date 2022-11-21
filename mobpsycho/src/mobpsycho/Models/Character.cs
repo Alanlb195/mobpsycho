@@ -6,12 +6,20 @@ namespace mobpsycho.Models
     public class Character
     {
         [Key]
-        [DatabaseGenerated(DatabaseGeneratedOption.Identity)] // Id Autoincrement
+        [DatabaseGenerated(DatabaseGeneratedOption.Identity)]
         public int IdCharacter { get; set; }
-        public string Name { get; set; } = null!; // Shigeo Kageyama
-        public string Gender { get; set; } = null!; // Male
-        public int Age { get; set; } // 14
-        public DateTime BirthDate { get; set; } // 12th May
-        public virtual ICollection<Abilitie>? Abilities { get; set; } // Relationship = - To Many
+        public string Name { get; set; }
+        public string Gender { get; set; }
+        public int Age { get; set; }
+        public DateTime BirthDate { get; set; }
+        public virtual ICollection<Abilitie> Abilities { get; set; }
+    }
+    public class CharacterRequest
+    {
+        public int IdCharacter { get; set; }
+        public string Name { get; set; }
+        public string Gender { get; set; }
+        public int Age { get; set; }
+        public DateTime BirthDate { get; set; }
     }
 }

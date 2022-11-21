@@ -1,5 +1,15 @@
+using AutoMapper;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using Microsoft.OpenApi.Models;
 using mobpsycho.Models;
+using mobpsycho.Models.Common;
+using mobpsycho.Services;
+using mobpsycho.Tools;
+using System.Reflection;
+using System.Text;
+using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
@@ -7,37 +17,106 @@ var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
 
 //-------- Add services to the container ----------//
 
+//--------- Mapper configuration ------------------//
+var mapperConfiguration = new MapperConfiguration(m =>
+{
+    m.AddProfile(new MappingProfile());
+});
 
-builder.Services.AddControllers(); // Add controllers
+IMapper mapper = mapperConfiguration.CreateMapper();
+builder.Services.AddSingleton(mapper);
+builder.Services.AddMvc(); //--------- End Mapper Config
 
-// Read more about conf. DBContext https://learn.microsoft.com/en-us/dotnet/api/microsoft.extensions.dependencyinjection.entityframeworkservicecollectionextensions.adddbcontext
+//------------------ Controllers Config ----------//
+builder.Services.AddControllers();
+// Referencias circulares - Mala práctica
+//.AddJsonOptions(x => x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve);
+
+
+//---------------- DBContext Config --------------------//
 // ConnectionStrings
-var MyLocalConnection = builder.Configuration.GetConnectionString("mobpsychoLocalDB");
+var myLocalConnection = builder.Configuration.GetConnectionString("MobpsychoLocalDB");
+var myHostedConnection = builder.Configuration.GetConnectionString("MobpsychoHostedDB");
 
-builder.Services.AddDbContext<MobpsychoDbContext>(options => options.UseSqlServer(MyLocalConnection));
+builder.Services.AddDbContext<MobpsychoDbContext>(options =>
+{
+    options.UseSqlServer(myHostedConnection
+    , providerOptions => providerOptions.EnableRetryOnFailure(1));
+});
 
+//----------------------- JWT Config  --------------------//
+builder.Services.AddScoped<IUserService, UserService>(); // AuthConfig
 
-builder.Services.AddSwaggerGen(); // Swagger
+var appSettingsSection = builder.Configuration.GetSection("AppSettings");
+builder.Services.Configure<AppSettings>(appSettingsSection);
 
-// Read more about CORS - https://learn.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-6.0
+var appSettings = appSettingsSection.Get<AppSettings>();
+var llave = Encoding.ASCII.GetBytes(appSettings.Secret);
+builder.Services.AddAuthentication(d =>
+{
+    d.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme;
+    d.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;
+})
+    .AddJwtBearer(d =>
+    {
+        d.RequireHttpsMetadata = false;
+        d.SaveToken = true;
+        d.TokenValidationParameters = new TokenValidationParameters
+        {
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(llave),
+            ValidateIssuer = false,
+            ValidateAudience = false,
+        };
+    }); // End JWT Config
+
+//----------------- Swagger API description ---------//
+builder.Services.AddSwaggerGen(options =>
+{
+    options.SwaggerDoc("v1", new OpenApiInfo
+    {
+        Version = "v1",
+        Title = "Mobpsycho API",
+        Description = "A Lambda ASP.NET Core Web API to manage mobsycho characters",
+        //TermsOfService = new Uri(""),
+        Contact = new OpenApiContact
+        {
+            Name = "Alan L. B. Github",
+            Url = new Uri("https://github.com/Alanlb195")
+        },
+        //License = new OpenApiLicense
+        //{
+        //    Name = "Example License",
+        //    Url = new Uri("https://example.com/license")
+        //}
+    });
+
+    var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+    options.IncludeXmlComments(Path.Combine(AppContext.BaseDirectory, xmlFilename));
+
+}); // END Swagger API description
+
+//-------------- CORS -----------------// https://learn.microsoft.com/en-us/aspnet/core/security/cors?view=aspnetcore-6.0
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyAllowSpecificOrigins,
                       policy =>
                       {
-                          // Example to allow origins from Angular Applications
-                          policy.WithOrigins("http://localhost:4200") // if u want to deploy, configure CORS!!
+                          // Allow any
+                          policy.WithOrigins("*")
                           .AllowAnyHeader()
                           .AllowAnyMethod();
                       });
-});
+});// End of CORS
 
-// Add AWS Lambda support. When application is run in Lambda Kestrel is swapped out as the web server with Amazon.Lambda.AspNetCoreServer. This
+
+// Add AWS Lambda support
+// When application is run in Lambda Kestrel is swapped out as the web server with Amazon.Lambda.AspNetCoreServer. This
 // package will act as the webserver translating request and responses between the Lambda event source and ASP.NET Core.
 builder.Services.AddAWSLambdaHosting(LambdaEventSource.RestApi);
 
 
-//-------- End of the container ----------//
+//-------- End of the Services container ----------//
 
 
 var app = builder.Build();
@@ -62,6 +141,7 @@ if (app.Environment.IsProduction()) // Production Environment (Lambda Deployed) 
 
 app.UseHttpsRedirection();
 app.UseCors(MyAllowSpecificOrigins);
+app.UseAuthentication(); // to use JWT
 app.UseAuthorization();
 app.MapControllers();
 
