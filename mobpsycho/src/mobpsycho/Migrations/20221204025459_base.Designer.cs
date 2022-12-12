@@ -12,14 +12,14 @@ using mobpsycho.Models;
 namespace mobpsycho.Migrations
 {
     [DbContext(typeof(MobpsychoDbContext))]
-    [Migration("20221105062947_character-abilitie")]
-    partial class characterabilitie
+    [Migration("20221204025459_base")]
+    partial class @base
     {
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "6.0.10")
+                .HasAnnotation("ProductVersion", "6.0.11")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder, 1L, 1);
@@ -64,7 +64,28 @@ namespace mobpsycho.Migrations
                     b.Property<DateTime>("BirthDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Gender")
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<string>("UrlImg")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
+
+                    b.HasKey("IdCharacter");
+
+                    b.ToTable("Character", (string)null);
+                });
+
+            modelBuilder.Entity("mobpsycho.Models.User", b =>
+                {
+                    b.Property<int>("IdUser")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("IdUser"), 1L, 1);
+
+                    b.Property<string>("Email")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -72,9 +93,13 @@ namespace mobpsycho.Migrations
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.HasKey("IdCharacter");
+                    b.Property<string>("Password")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(max)");
 
-                    b.ToTable("Character", (string)null);
+                    b.HasKey("IdUser");
+
+                    b.ToTable("User", (string)null);
                 });
 
             modelBuilder.Entity("mobpsycho.Models.Abilitie", b =>

@@ -29,16 +29,17 @@ namespace mobpsycho.Controllers
         /// </summary>
         // GET: api/Characters
         [HttpGet]
-        [Authorize]
         public async Task<ActionResult<Response>> GetCharacters()
         {
             try
             {
                 var data = await _context.Characters.ToListAsync();
 
+                var response = _mapper.Map<List<CharacterRequest>>(data);
+
                 if(data.Count > 0)
                 {
-                    return Ok(new Response(true, "Todos los personajes correctamente obtenidos", data));
+                    return Ok(new Response(true, "Todos los personajes correctamente obtenidos", response));
                 }
                 return NotFound(new Response(false, "al parecer no hay personajes"));
             }
@@ -53,7 +54,6 @@ namespace mobpsycho.Controllers
         /// </summary>
         // GET: api/Characters/5
         [HttpGet("{id}")]
-        [Authorize]
         public async Task<ActionResult<Response>> GetCharacter(int id)
         {
             var character = await _context.Characters.FindAsync(id);
@@ -63,7 +63,39 @@ namespace mobpsycho.Controllers
                 return NotFound();
             }
 
-            return Ok(new Response(true, "Personaje encontrado", character));
+            try
+            {
+                CharacterDetails characterDetail = new CharacterDetails();
+                using (var db = new MobpsychoDbContext())
+                {
+                    characterDetail = (from d in db.Characters
+                                       where d.IdCharacter == id
+                                       select new CharacterDetails
+                                       {
+                                           IdCharacter = d.IdCharacter,
+                                           Name = d.Name,
+                                           UrlImg = d.UrlImg,
+                                           Age = d.Age,
+                                           BirthDate = d.BirthDate,
+
+                                           Abilitie = (
+                                                from a in db.Abilities
+                                                where a.IdCharacter == d.IdCharacter
+                                                select new AbilitieSimple
+                                                {
+                                                    IdAbilitie = a.IdAbilitie,
+                                                    Name = a.Name,
+                                                    Description = a.Description,
+                                                }
+                                           ).ToList()
+
+                                       }).FirstOrDefault();
+                }
+                return Ok(new Response(true, "Objeto complejo con LINQ", characterDetail));
+            } catch(Exception ex)
+            {
+                return BadRequest(ex.Message);
+            }
         }
 
         /// <summary>
@@ -74,7 +106,6 @@ namespace mobpsycho.Controllers
         /// <returns></returns>
         // PUT: api/Characters/5
         [HttpPut("{id}")]
-        [Authorize]
         public async Task<ActionResult<Response>> PutCharacter(int id, CharacterRequest request)
         {
             if (id != request.IdCharacter)
@@ -112,7 +143,6 @@ namespace mobpsycho.Controllers
         /// <returns></returns>
         // POST: api/Characters
         [HttpPost]
-        [Authorize]
         public async Task<ActionResult<Response>> PostCharacter(CharacterRequest request)
         {
             try
@@ -139,7 +169,6 @@ namespace mobpsycho.Controllers
         /// <returns></returns>
         // DELETE: api/Characters/5
         [HttpDelete("{id}")]
-        [Authorize]
         public async Task<IActionResult> DeleteCharacter(int id)
         {
             var character = await _context.Characters.FindAsync(id);

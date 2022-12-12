@@ -9,7 +9,6 @@ using mobpsycho.Services;
 using mobpsycho.Tools;
 using System.Reflection;
 using System.Text;
-using System.Text.Json.Serialization;
 
 var builder = WebApplication.CreateBuilder(args);
 var MyAllowSpecificOrigins = "_myAllowSpecificOrigins";
@@ -29,8 +28,6 @@ builder.Services.AddMvc(); //--------- End Mapper Config
 
 //------------------ Controllers Config ----------//
 builder.Services.AddControllers();
-// Referencias circulares - Mala práctica
-//.AddJsonOptions(x => x.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.Preserve);
 
 
 //---------------- DBContext Config --------------------//
@@ -41,7 +38,7 @@ var myHostedConnection = builder.Configuration.GetConnectionString("MobpsychoHos
 builder.Services.AddDbContext<MobpsychoDbContext>(options =>
 {
     options.UseSqlServer(myHostedConnection
-    , providerOptions => providerOptions.EnableRetryOnFailure(1));
+       , providerOptions => providerOptions.EnableRetryOnFailure(1));
 });
 
 //----------------------- JWT Config  --------------------//
@@ -103,7 +100,7 @@ builder.Services.AddCors(options =>
                       policy =>
                       {
                           // Allow any
-                          policy.WithOrigins("*")
+                          policy.WithOrigins("http://localhost:4200")
                           .AllowAnyHeader()
                           .AllowAnyMethod();
                       });
@@ -131,11 +128,15 @@ if (app.Environment.IsDevelopment()) // Development Environment
 if (app.Environment.IsProduction()) // Production Environment (Lambda Deployed) check security :)
 {
     app.UseSwagger();
-    app.UseSwaggerUI(options =>
+    app.UseSwaggerUI(setup =>
     {
-        var myString = "letsReadTheApiDoc"; // Swagger Doc Production Environment
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "v1");
-        options.RoutePrefix = myString;
+        var myString = "readoc"; // Swagger Doc Production Environment
+        string swaggerJsonBasePath = string.IsNullOrWhiteSpace(setup.RoutePrefix) ? "." : "..";
+        setup.SwaggerEndpoint($"{swaggerJsonBasePath}/swagger/v1/swagger.json", "version 1.0");
+        setup.OAuthAppName("Lambda API");
+        setup.OAuthScopeSeparator(" ");
+        setup.OAuthUsePkce();
+        setup.RoutePrefix = myString;
     });
 }
 

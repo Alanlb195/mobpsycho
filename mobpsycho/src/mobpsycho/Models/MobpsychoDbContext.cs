@@ -2,7 +2,7 @@
 
 namespace mobpsycho.Models
 {
-    public class MobpsychoDbContext: DbContext
+    public class MobpsychoDbContext : DbContext
     {
         // Constructor
         public MobpsychoDbContext() { }
@@ -13,6 +13,7 @@ namespace mobpsycho.Models
         public DbSet<Abilitie> Abilities { get; set; }
         public DbSet<User> Users { get; set; }
 
+
         // Override names
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
@@ -21,7 +22,7 @@ namespace mobpsycho.Models
             modelBuilder.Entity<User>().ToTable("User");
         }
 
-        // Para corregir error de login usando SHA256, error: 
+        // Para corregir error de login usando SHA256 y JWT, error: hay que añadir la cadena de conexión
         protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
         {
             if (!optionsBuilder.IsConfigured)
@@ -30,7 +31,8 @@ namespace mobpsycho.Models
                    .SetBasePath(Directory.GetCurrentDirectory())
                    .AddJsonFile("appsettings.json")
                    .Build();
-                var connectionString = configuration.GetConnectionString("mobpsychoLocalDB");
+                //var connectionString = configuration.GetConnectionString("mobpsychoLocalDB");
+                var connectionString = configuration.GetConnectionString("mobpsychoHostedDB");
                 optionsBuilder.UseSqlServer(connectionString);
             }
         }

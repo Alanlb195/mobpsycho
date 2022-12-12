@@ -62,11 +62,11 @@ namespace mobpsycho.Migrations
                     b.Property<DateTime>("BirthDate")
                         .HasColumnType("datetime2");
 
-                    b.Property<string>("Gender")
+                    b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
-                    b.Property<string>("Name")
+                    b.Property<string>("UrlImg")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
 
@@ -97,7 +97,7 @@ namespace mobpsycho.Migrations
 
                     b.HasKey("IdUser");
 
-                    b.ToTable("Users");
+                    b.ToTable("User", (string)null);
                 });
 
             modelBuilder.Entity("mobpsycho.Models.Abilitie", b =>

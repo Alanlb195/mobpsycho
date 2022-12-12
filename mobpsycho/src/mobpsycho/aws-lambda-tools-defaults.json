@@ -1,20 +1,21 @@
+
 {
-  "Information": [
-    "This file provides default values for the deployment wizard inside Visual Studio and the AWS Lambda commands added to the .NET Core CLI.",
-    "To learn more about the Lambda commands with the .NET Core CLI execute the following command at the command line in the project root directory.",
-    "dotnet lambda help",
-    "All the command line options for the Lambda command can be specified in this file."
-  ],
-  // Do u want to deploy on AWS Lambda?
-  "profile": "", // 
-  "region": "", // same ^
-  "configuration": "Release",
-  "s3-prefix": "mobpsycho/",
-  "template": "serverless.template",
-  "template-parameters": "",
-  "stack-name": "LambdaMobpsycho", // Any name
-  "function-runtime": "dotnet6", // Doc - https://docs.aws.amazon.com/es_es/lambda/latest/dg/csharp-package-cli.html
-  "function-memory-size": 256,
-  "function-timeout": 30,
-  "function-handler": "mobpsycho" // Name of the project/solution
+    "Information" : [
+        "This file provides default values for the deployment wizard inside Visual Studio and the AWS Lambda commands added to the .NET Core CLI.",
+        "To learn more about the Lambda commands with the .NET Core CLI execute the following command at the command line in the project root directory.",
+        "dotnet lambda help",
+        "All the command line options for the Lambda command can be specified in this file."
+    ],
+    "profile"     : "default",
+    "region"      : "us-east-2",
+    "configuration" : "Release",
+    "s3-prefix"     : "mobpsycho/",
+    "template"      : "serverless.template",
+    "template-parameters" : "",
+    "stack-name"          : "LambdaMobpsycho",
+    "function-runtime"    : "dotnet6",
+    "function-memory-size" : 256,
+    "function-timeout"     : 30,
+    "function-handler"     : "mobpsycho",
+    "s3-bucket"            : "cloudadminaws"
 }

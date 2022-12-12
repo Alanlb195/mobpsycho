@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using AutoMapper;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
@@ -17,9 +18,12 @@ namespace mobpsycho.Controllers
     public class AbilitiesController : ControllerBase
     {
         private readonly MobpsychoDbContext _context;
+        private readonly IMapper _mapper;
 
-        public AbilitiesController(MobpsychoDbContext context)
+        // Constructor
+        public AbilitiesController(MobpsychoDbContext context, IMapper mapper)
         {
+            _mapper = mapper;
             _context = context;
         }
 
@@ -36,8 +40,11 @@ namespace mobpsycho.Controllers
                 var lista = await _context.Abilities.ToListAsync();
 
                 if(lista.Count > 0) {
+
+                    var request = _mapper.Map<List<AbilitieRequest>>(lista);
+
                     // regresa la response con un objeto character null
-                    return Ok(new Response(true, "Lista de habilidades conseguida", lista));
+                    return Ok(new Response(true, "Lista de habilidades conseguida", request));
                 }
                 return NotFound(new Response(false, "No hay habilidades en la base de datos"));
 
@@ -57,62 +64,50 @@ namespace mobpsycho.Controllers
         public async Task<ActionResult<Response>> GetAbilitie(int id)
         {
 
-            // Primero que nada, veré si la habilidad existe para que si no, regrese not found
+            //Primero que nada, veré si la habilidad existe para que si no, regrese not found
 
-            var abilitie = await _context.Abilities.FindAsync(id);
+           var abilitie = await _context.Abilities.FindAsync(id);
 
             if (abilitie == null)
             {
                 return NotFound(new Response(false, "No se encontró la habilidad"));
             }
 
-            return Ok(new Response(true,"Habilidad encontrada",abilitie));
+            var request = _mapper.Map<AbilitieRequest>(abilitie);
 
-            // Si la habilidad se encuentra, regreso un objeto complejo, habilidad y su personaje asociado. Hecho sin usar Auto Mapper o Dapper :(
-            //AbilitieViewModel abilitieView = new AbilitieViewModel();
-            //using (var db = new MobpsychoDbContext())
-            //{
-            //    abilitieView = (from d in db.Abilities
-            //                        where d.IdAbilitie == id
-            //                        select new AbilitieViewModel
-            //                        {
-            //                            IdAbilitie = d.IdAbilitie,
-            //                            Name = d.Name,
-            //                            Description = d.Description,
-            //                            IdCharacter = d.IdCharacter,
-            //                            Character = (
-            //                                from c in db.Characters
-            //                                where c.IdCharacter == d.IdCharacter
-            //                                select new CharacterViewModel
-            //                                {
-            //                                    IdCharacter = c.IdCharacter,
-            //                                    Name = c.Name,
-            //                                    Gender = c.Gender,
-            //                                    Age = c.Age,
-            //                                    BirthDate = c.BirthDate
-            //                                }
-            //                            ).ToList()
-
-            //                        }).FirstOrDefault();
-            //}
-            //return Ok(new Response(true, "Habilidad encontrada", abilitieView));
+            return Ok(new Response(true, "Habilidad encontrada", request));
 
         }
 
         /// <summary>
         /// Actualiza una habilidad específica
         /// </summary>
+        /// <remarks>
+        /// Sample request:
+        ///
+        ///     PUT api/Abilities
+        ///     
+        ///     {
+        ///        "idAbilitie": 1
+        ///        "name": "New name",
+        ///        "description": "New Description",
+        ///        "idCharacter": 2
+        ///     }
+        ///
+        /// </remarks>
         /// <param name="id"></param>
         /// <param name="abilitie"></param>
         /// <returns></returns>
         // PUT: api/Abilities/5
         [HttpPut("{id}")]
-        public async Task<IActionResult> PutAbilitie(int id, Abilitie abilitie)
+        public async Task<ActionResult<Response>> PutAbilitie(int id, AbilitieRequest request)
         {
-            if (id != abilitie.IdAbilitie)
+            if (id != request.IdAbilitie)
             {
                 return BadRequest(new Response(false,"Los id no coinciden"));
             }
+
+            Abilitie abilitie = _mapper.Map<Abilitie>(request);
 
             _context.Entry(abilitie).State = EntityState.Modified;
 
@@ -154,17 +149,13 @@ namespace mobpsycho.Controllers
         /// <returns></returns>
         // POST: api/Abilities
         [HttpPost]
-        public async Task<ActionResult<Response>> PostAbilitie([FromBody] AbilitieRequest abilitie)
+        public async Task<ActionResult<Response>> PostAbilitie([FromBody] AbilitieRequest request)
         {
             try
             {
-                Abilitie ab = new Abilitie();
+                Abilitie abilitie = _mapper.Map<Abilitie>(request);
 
-                ab.Name = abilitie.Name;
-                ab.Description = abilitie.Description;
-                ab.IdCharacter = abilitie.IdCharacter;
-
-                _context.Abilities.Add(ab);
+                _context.Abilities.Add(abilitie);
 
                 await _context.SaveChangesAsync();
 
